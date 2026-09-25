@@ -2,18 +2,8 @@
 
 Zowie chat as an Android component. Add `ZowieChat` to your Compose UI — or
 `ZowieChatFragment` / `ZowieChatActivity` to a View-based app — give it your
-`baseUrl` and `instanceId`, and it renders the full Zowie chat experience:
-messaging, voice, file upload, transcript download and CSAT, with configuration
-fetching and session handling built in.
-
-## Features
-
-- Feature parity with the Zowie web widget (text + voice, file upload,
-  transcript download, CSAT).
-- Automatic configuration fetching and encrypted session persistence.
-- Three entry points: Compose, `Fragment` and a standalone `Activity`.
-- Event callbacks for lifecycle, messages, unread count and links.
-- Host overrides for link opening and file downloads.
+`baseUrl` and `instanceId`, and it renders the full Zowie chat experience with
+configuration fetching and encrypted session persistence built in.
 
 ## Requirements
 
@@ -266,6 +256,8 @@ Values set here override the ones configured in the Zowie panel.
 | `title`                  | `String?`    | Header title.                                   |
 | `primaryColor`           | `String?`    | Primary color, applied to both light and dark.  |
 | `fontColor`              | `FontColor?` | `WHITE` or `BLACK`, applied to both themes.     |
+| `userMessageBackgroundColor` | `String?` | User message bubble background color.           |
+| `userMessageFontColor`   | `FontColor?` | User message bubble text color.                 |
 | `logoUrl`                | `String?`    | Logo shown in the chat header.                  |
 | `headerVisible`          | `Boolean`    | Whether the chat header is visible (default `false`). |
 | `voiceExperienceEnabled` | `Boolean?`   | Enable voice conversation mode.                 |
