@@ -488,6 +488,22 @@ dropped.
 | `registerPushToken` | Register an FCM device token for push notifications.               |
 | `deregisterPushToken` | Deregister the current device token; stops push notifications.   |
 
+## Session persistence
+
+Sessions are stored in encrypted `SharedPreferences` backed by the Android
+Keystore, under the name `ai.zowie.session.<instanceId>`. Sessions survive app
+restarts and process death.
+
+Call `ZowieChatSession.clearAnonymousSession` to clear a stored session without
+opening the chat (e.g. on user logout when no chat is on screen):
+
+```kotlin
+ZowieChatSession.clearAnonymousSession(context, instanceId)
+```
+
+If a chat is currently open, use `controller.endChat()` instead — it ends the
+conversation and clears the session in one step.
+
 ## Push notifications
 
 The SDK can register an FCM device token with the Zowie backend so the user
