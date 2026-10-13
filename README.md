@@ -41,11 +41,12 @@ dependencyResolutionManagement {
 ```kotlin
 // app/build.gradle.kts
 dependencies {
-    implementation("ai.zowie:chat-android-sdk:<version>")
+    implementation("ai.zowie:chat-android-sdk:1.0.4")
 }
 ```
 
-For the released versions, browse
+See [CHANGELOG.md](CHANGELOG.md) for what changed in each version. All released
+versions are in
 [the repository](https://zowie.jfrog.io/artifactory/zowie-android-sdk/ai/zowie/chat-android-sdk/).
 
 The SDK declares `android.permission.INTERNET` in its own manifest, so you do not
@@ -128,7 +129,8 @@ class MyChatFragment : ZowieChatFragment(), ZowieChatEventListener {
 > [!NOTE]
 > When providing a `ZowieChatEventListener` for a fragment, you are responsible for handling 
 > the `onMinimized` and `ChatEnded` event (e.g., by popping the backstack). If no listener is set,
-> the fragment calls `parentFragmentManager.popBackStack()` by default.
+> the fragment calls `parentFragmentManager.popBackStack()` by default, or removes itself when the
+> back stack is empty.
 
 ### Activity
 
@@ -218,26 +220,26 @@ val config = zowieChatConfig(
 | Field        | Type     | Description                                                                   |
 | ------------ | -------- | ----------------------------------------------------------------------------- |
 | `baseUrl`    | `String` | Base origin of your Zowie deployment, e.g. `https://<slug>.chat.getzowie.com`. |
-| `instanceId` | `String` | Zowie chatbot instance ID.                                                    |
+| `instanceId` | `String` | Zowie chat instance ID.                                                       |
 
 ### Session and behaviour
 
 | Field                     | Type               | Default          | Description                                             |
 | ------------------------- | ------------------ | ---------------- | ------------------------------------------------------- |
-| `metadata`                | `Metadata?`        | `null`           | User attributes. `metadata.locale` also selects the bot's region. |
+| `metadata`                | `Metadata?`        | `null`           | User attributes. `metadata.locale` also selects the AI agent's region. |
 | `externalAccessToken`     | `String?`          | `null`           | JWT for authenticated sessions; anonymous when omitted. |
-| `context`                 | `String?`          | `null`           | Custom context string passed to the bot.                |
+| `context`                 | `String?`          | `null`           | Custom context string passed to the AI agent.           |
 | `resetSession`            | `Boolean`          | `false`          | Clear any persisted session on init.                    |
 | `initialConversationMode` | `ConversationMode` | `TEXT`           | Mode the chat opens in (`TEXT` or `VOICE`).             |
 | `referral`                | `String`           | `"start"`        | Referral used for auto-start.                           |
 | `initialUserMessage`      | `String?`          | `null`           | Initial user message sent with auto-start.              |
-| `versionType`             | `VersionType`      | `PRODUCTION`     | Bot version the conversation runs against (`PRODUCTION` or `STAGING`). |
+| `versionType`             | `VersionType`      | `PRODUCTION`     | AI agent version the conversation runs against (`PRODUCTION` or `STAGING`). |
 
-#### Testing against a staging bot
+#### Testing against the staging version of your AI agent
 
 Set `versionType = VersionType.STAGING` to run the conversation against the
-bot's current staging version instead of the published one, so a bot can be
-tried out from the app before it goes live:
+AI agent's current staging version instead of the published version, so the AI
+agent can be tried out from the app before it goes live:
 
 ```kotlin
 val config = zowieChatConfig(baseUrl = BASE_URL, instanceId = INSTANCE_ID) {
@@ -273,14 +275,14 @@ defaults so you override only what you need.
 | Event / callback     | Payload                        | Fires when…                                  |
 | -------------------- | ------------------------------ | -------------------------------------------- |
 | `Loaded`             | —                              | The chat finished loading.                   |
-| `ChatStarted`        | `conversationId: String`       | A conversation started.                      |
+| `ChatStarted`        | `conversationId: String`       | A conversation started or was resumed.                    |
 | `ChatEnded`          | —                              | The conversation ended.                      |
 | `MessageSent`        | `message: String`              | The user sent a message.                     |
 | `MessageReceived`    | `payload: String` (raw JSON)   | A message was received.                      |
 | `SessionExpired`     | —                              | The session expired.                         |
 | `UnreadMessages`     | `count: Int`                   | The unread message count changed.            |
 | `Minimized`          | —                              | The user tapped the minimize control.         |
-| `ConfigError`        | `error: Throwable`             | Loading the chat configuration failed.       |
+| `ConfigError`        | `error: Throwable`             | Loading the chat configuration or page failed. |
 | `GenericEvent`       | `name: String`, `params: Map<String, Any?>` | A backend event fired (Decision Engine). |
 
 ## Back handling
@@ -398,7 +400,7 @@ fields are optional.
 | `name`        | `String?`              | Full display name.                                   |
 | `email`       | `String?`              | User's email address.                                |
 | `phoneNumber` | `String?`              | User's phone number.                                 |
-| `locale`      | `String?`              | Locale, e.g. `en-US`. Also selects the bot's region. |
+| `locale`      | `String?`              | Locale, e.g. `en-US`. Also selects the AI agent's region. |
 | `timezone`    | `String?`              | IANA timezone, e.g. `Europe/Warsaw`.                 |
 | `extraParams` | `Map<String, String>?` | Arbitrary custom attributes.                         |
 
@@ -446,12 +448,10 @@ The in-chat picker offers the files on the device alongside **Camera**, and
 needs no permission for either. Taking a photo hands off to the system camera
 app, which holds the permission itself, so nothing is required of you.
 
-Declaring `CAMERA` in your own manifest is the one thing that changes this.
-Android then expects *your* app to hold the permission before it may hand off,
-and refuses while it is merely declared and not granted — so the camera option
-disappears from the chat picker. The SDK leaves it out rather than showing an
-entry that would fail. If your app declares `CAMERA` for its own features,
-request it at runtime as you normally would and the option comes back.
+Declaring `CAMERA` in your own manifest (directly or through another library) is
+the one thing that changes this. Android then expects *your* app to hold the
+permission before it may hand off, so the SDK requests it when the picker opens.
+If the user declines, the picker shows files only.
 
 ## Controlling the chat
 
@@ -485,7 +485,7 @@ dropped.
 | `startChat`         | Start a new conversation when none is active (no-op otherwise).    |
 | `endChat`           | Clear the stored session and current conversation (use on logout). |
 | `getConversationId` | The active conversation's ID, or `null` when none is open.         |
-| `registerPushToken` | Register an FCM device token for push notifications.               |
+| `registerPushToken` | Register an FCM registration token for push notifications.         |
 | `deregisterPushToken` | Deregister the current device token; stops push notifications.   |
 
 ## Session persistence
@@ -506,7 +506,7 @@ conversation and clears the session in one step.
 
 ## Push notifications
 
-The SDK can register an FCM device token with the Zowie backend so the user
+The SDK can register an FCM registration token with the Zowie backend so the user
 receives push notifications for new messages.
 
 ```kotlin
